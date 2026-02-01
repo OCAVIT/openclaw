@@ -46,5 +46,5 @@ ENV OPENCLAW_GATEWAY_HOST=0.0.0.0
 # Мы используем --allow-unconfigured, чтобы он не требовал файл openclaw.json
 # Порт передаем через $PORT от Railway
 CMD mkdir -p /home/node/.openclaw && \
-    echo '{"gateway":{"host":"0.0.0.0","port":'$PORT'},"model":"openai/gpt-4o"}' > /home/node/.openclaw/openclaw.json && \
+    echo '{"gateway":{"port":'$PORT'}}' > /home/node/.openclaw/openclaw.json && \
     node dist/index.js gateway
