@@ -47,4 +47,4 @@ USER node
 
 # 8. ЗАПУСК (ИСПРАВЛЕНО ТУТ)
 # Добавили аргумент "gateway", чтобы запустить сам сервер, а не просто меню помощи
-CMD ["node", "dist/index.js", "gateway"]
+CMD ["node", "dist/index.js", "gateway", "--allow-unconfigured"]
