@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
-# 3. Bun и Corepack
+# 3. Устанавливаем Bun
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:${PATH}"
 RUN corepack enable
@@ -33,24 +33,16 @@ ENV OPENCLAW_PREFER_PNPM=1
 RUN pnpm ui:build
 ENV NODE_ENV=production
 
-# 6. Подготовка конфига и прав доступа
-# Создаем папку настроек
-RUN mkdir -p /home/node/.openclaw
-
-# === МАГИЯ ЗДЕСЬ ===
-# Мы принудительно создаем конфиг, который говорит серверу: "Слушай весь интернет (0.0.0.0)"
-# Также мы прописываем сюда настройки для смены модели на OpenAI
-RUN echo '{\
-  "gateway": { "host": "0.0.0.0" },\
-  "llm": { "provider": "openai", "model": "gpt-4o" }\
-}' > /home/node/.openclaw/openclaw.json
-
-# Передаем права на папку пользователю node
-RUN chown -R node:node /home/node/.openclaw
-
-# 7. Запуск
+# 6. Безопасность
 USER node
 
-# Запускаем gateway. Порт передаем через флаг (он перекроет конфиг, если что),
-# а --allow-unconfigured больше не нужен, так как конфиг мы создали выше.
-CMD node dist/index.js gateway --port $PORT
+# === ИСПРАВЛЕНИЕ ===
+# Вместо создания JSON-файла, задаем настройки через переменные окружения.
+# Это заставляет сервер слушать внешний мир (0.0.0.0)
+ENV HOST=0.0.0.0
+ENV OPENCLAW_GATEWAY_HOST=0.0.0.0
+
+# 7. Запуск
+# Мы используем --allow-unconfigured, чтобы он не требовал файл openclaw.json
+# Порт передаем через $PORT от Railway
+CMD node dist/index.js gateway --allow-unconfigured --port $PORT
