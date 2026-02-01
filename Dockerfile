@@ -1,8 +1,7 @@
-# Основа - как в оригинале, используем Debian-based образ (bookworm)
+# Основа - Node 22 (Debian Bookworm)
 FROM node:22-bookworm
 
-# 1. Устанавливаем Chromium и зависимости (Взято из твоего первого файла и адаптировано)
-# Это нужно, чтобы браузер мог запуститься в Linux среде Railway
+# 1. Устанавливаем Chromium и системные зависимости
 RUN apt-get update && apt-get install -y \
     chromium \
     fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
@@ -10,40 +9,39 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Настраиваем переменные для Puppeteer (чтобы он использовал установленный Chromium)
+# 2. Настраиваем Puppeteer на системный Chrome
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
-# 3. Устанавливаем Bun (Нужен для скриптов сборки OpenClaw - из оригинального файла)
+# 3. Устанавливаем Bun (нужен для скриптов)
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:${PATH}"
 
-# Включаем pnpm (критично для OpenClaw)
+# Включаем pnpm
 RUN corepack enable
 
 WORKDIR /app
 
-# 4. Копируем файлы конфигурации проекта
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+# 4. Копируем конфиги (УБРАЛ pnpm-lock.yaml из списка, чтобы не было ошибки)
+COPY package.json pnpm-workspace.yaml .npmrc ./
+# Копируем конфиги подмодулей, если они есть
 COPY ui/package.json ./ui/package.json
 COPY patches ./patches
 COPY scripts ./scripts
 
-# 5. Устанавливаем зависимости через pnpm
-RUN pnpm install --frozen-lockfile
+# 5. Устанавливаем зависимости (УБРАЛ --frozen-lockfile, чтобы он создал новый lock-файл сам)
+RUN pnpm install
 
-# 6. Копируем весь код и собираем
+# 6. Копируем остальной код и билдим
 COPY . .
 RUN OPENCLAW_A2UI_SKIP_MISSING=1 pnpm build
 
-# Сборка UI (с фиксом для ARM/архитектур, как в оригинале)
+# Сборка UI
 ENV OPENCLAW_PREFER_PNPM=1
 RUN pnpm ui:build
 
 ENV NODE_ENV=production
 
-# 7. Безопасность: запускаем от пользователя node (не root)
+# 7. Безопасность и запуск
 USER node
-
-# 8. Запуск
 CMD ["node", "dist/index.js"]
