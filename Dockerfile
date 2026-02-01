@@ -47,4 +47,5 @@ USER node
 
 # 8. ЗАПУСК (ИСПРАВЛЕНО ТУТ)
 # Добавили аргумент "gateway", чтобы запустить сам сервер, а не просто меню помощи
-CMD node dist/index.js gateway --allow-unconfigured --host 0.0.0.0 --port $PORT
+# Убрали --host, оставили только --port
+CMD node dist/index.js gateway --allow-unconfigured --port $PORT
