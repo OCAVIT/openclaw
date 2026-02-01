@@ -22,14 +22,14 @@ RUN corepack enable
 
 WORKDIR /app
 
-# 4. Копируем конфиги (УБРАЛ pnpm-lock.yaml из списка, чтобы не было ошибки)
+# 4. Копируем конфиги
 COPY package.json pnpm-workspace.yaml .npmrc ./
-# Копируем конфиги подмодулей, если они есть
+
 COPY ui/package.json ./ui/package.json
 COPY patches ./patches
 COPY scripts ./scripts
 
-# 5. Устанавливаем зависимости (УБРАЛ --frozen-lockfile, чтобы он создал новый lock-файл сам)
+# 5. Устанавливаем зависимости
 RUN pnpm install
 
 # 6. Копируем остальной код и билдим
@@ -42,6 +42,9 @@ RUN pnpm ui:build
 
 ENV NODE_ENV=production
 
-# 7. Безопасность и запуск
+# 7. Безопасность
 USER node
-CMD ["node", "dist/index.js"]
+
+# 8. ЗАПУСК (ИСПРАВЛЕНО ТУТ)
+# Добавили аргумент "gateway", чтобы запустить сам сервер, а не просто меню помощи
+CMD ["node", "dist/index.js", "gateway"]
